@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+
+# Local runtime data (may contain assessment records or uploaded documents)
+.tamper-scanner-ledger.db
+.tamper-scanner-artifacts/
+*.db
+
+# Secrets and private documents
+.env
+*.docx
+~$*
+
+# Editor / local tool settings
+.vscode/
+.claude/

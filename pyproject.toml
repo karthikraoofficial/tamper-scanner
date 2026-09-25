@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tamper-scanner"
+version = "0.1.0"
+description = "A small file integrity scanner based on SHA-256 manifests."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+	"fastapi>=0.115",
+	"cryptography>=43.0",
+	"openai>=1.0",
+	"pypdf>=5.0",
+	"python-multipart>=0.0.9",
+	"uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+tamper-scanner = "tamper_scanner.cli:main"
+tamper-scanner-web = "tamper_scanner.web:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
