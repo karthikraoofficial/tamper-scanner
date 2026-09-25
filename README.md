@@ -56,6 +56,12 @@ Promotion defaults are `80%` verdict accuracy and `80%` evidence citation covera
 
 To enable encrypted artifact retention, set `TAMPER_SCANNER_ENCRYPTION_KEY` before starting the application. Uploaded PDFs are written as Fernet ciphertext under `.tamper-scanner-artifacts` and are removed by the assessment deletion endpoint. Leave the variable unset to run without document retention.
 
+Set `TAMPER_SCANNER_PASSWORD` to require HTTP Basic authentication on every route (any username, this password). Set `TAMPER_SCANNER_DATA_DIR` to change where the ledger and artifacts are stored.
+
+## Vercel demo deployment
+
+`api/index.py` serves the app on Vercel with data under `/tmp`, which is ephemeral and not shared between instances, so history, reviews, and evals are not durable there. When hosted with `TAMPER_SCANNER_ASSESSOR=openai`, the app refuses to start unless `TAMPER_SCANNER_PASSWORD` is set, so the OpenAI key cannot be used anonymously.
+
 Create a baseline for a directory:
 
 ```powershell

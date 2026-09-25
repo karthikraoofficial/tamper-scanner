@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import os
+import secrets
 from dataclasses import asdict
 from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, status
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile, status
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from pydantic import BaseModel
 
 from .assessment import Assessment, AssessmentRunner
-from .config import assessor_from_environment
+from .config import assessor_from_environment, password_from_environment
 from .forensics import PdfInspector
 from .harness import TraceRecorder, run_holdout
 from .ledger import AssessmentLedger
@@ -32,8 +35,21 @@ def create_app(
     artifact_root: Path | None = None,
     ledger_path: Path | None = None,
     assessor=None,
+    password: str | None = None,
 ) -> FastAPI:
     application = FastAPI(title="Tamper Scanner")
+    if password:
+
+        @application.middleware("http")
+        async def require_password(request: Request, call_next):
+            if _password_matches(request.headers.get("Authorization", ""), password):
+                return await call_next(request)
+            return PlainTextResponse(
+                "Authentication required.",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": 'Basic realm="Tamper Scanner"'},
+            )
+
     configured_assessor = assessor or assessor_from_environment()
     ledger = AssessmentLedger(ledger_path or Path(".tamper-scanner-ledger.db"))
     artifact_store = None
@@ -550,12 +566,24 @@ loadSummary();
     return application
 
 
+def _password_matches(authorization: str, password: str) -> bool:
+    scheme, _, encoded = authorization.partition(" ")
+    if scheme.lower() != "basic":
+        return False
+    try:
+        _, _, supplied = base64.b64decode(encoded).decode("utf-8").partition(":")
+    except (binascii.Error, UnicodeDecodeError):
+        return False
+    return secrets.compare_digest(supplied.encode("utf-8"), password.encode("utf-8"))
+
+
 def app_from_environment() -> FastAPI:
     data_dir = Path(os.getenv("TAMPER_SCANNER_DATA_DIR", "."))
     return create_app(
         os.getenv("TAMPER_SCANNER_ENCRYPTION_KEY"),
         artifact_root=data_dir / ".tamper-scanner-artifacts",
         ledger_path=data_dir / ".tamper-scanner-ledger.db",
+        password=password_from_environment(),
     )
 
 

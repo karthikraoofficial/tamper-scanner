@@ -33,3 +33,13 @@ def assessor_from_environment(
     else:
         client = client_factory(api_key)
     return OpenAIAssessor(client=client, model=model, prompt_version=prompt_version)
+
+
+def password_from_environment(environment: Mapping[str, str] | None = None) -> str | None:
+    values = environment if environment is not None else os.environ
+    password = values.get("TAMPER_SCANNER_PASSWORD") or None
+    hosted = bool(values.get("VERCEL"))
+    uses_openai = values.get("TAMPER_SCANNER_ASSESSOR", "fake").lower() == "openai"
+    if hosted and uses_openai and password is None:
+        raise ValueError("TAMPER_SCANNER_PASSWORD is required when the OpenAI assessor is publicly hosted.")
+    return password

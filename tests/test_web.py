@@ -232,3 +232,30 @@ def test_upload_rejects_non_pdf_content() -> None:
     )
 
     assert response.status_code == 415
+
+
+def test_password_protects_every_route(tmp_path) -> None:
+    protected_client = TestClient(create_app(ledger_path=tmp_path / "ledger.db", password="s3cret"))
+
+    anonymous = protected_client.get("/")
+    wrong = protected_client.get("/", auth=("reviewer", "wrong"))
+    upload = protected_client.post(
+        "/assessments",
+        files={"document": ("statement.pdf", pdf_bytes(), "application/pdf")},
+    )
+    allowed = protected_client.get("/", auth=("reviewer", "s3cret"))
+
+    assert anonymous.status_code == 401
+    assert anonymous.headers["WWW-Authenticate"].startswith("Basic")
+    assert wrong.status_code == 401
+    assert upload.status_code == 401
+    assert allowed.status_code == 200
+
+
+def test_password_is_configurable_from_environment(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("TAMPER_SCANNER_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("TAMPER_SCANNER_PASSWORD", "s3cret")
+    protected_client = TestClient(app_from_environment())
+
+    assert protected_client.get("/").status_code == 401
+    assert protected_client.get("/", auth=("reviewer", "s3cret")).status_code == 200
