@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tamper-scanner"
 version = "0.1.0"
-description = "A small file integrity scanner based on SHA-256 manifests."
+description = "Local browser application for reviewable bank statement PDF tamper assessment."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
