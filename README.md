@@ -2,6 +2,8 @@
 
 Tamper Scanner is an early local browser application for reviewable bank statement PDF assessment. It currently includes deterministic PDF observations, a schema-validated model-assessment seam, replayable eval primitives, and redacted structured traces. It does not yet make a production tamper determination.
 
+**Live demo:** https://tamper-scanner-five.vercel.app/ (password protected; see [Vercel demo deployment](#vercel-demo-deployment)). Do not upload real bank statements to the demo.
+
 ## Setup
 
 Create and activate a virtual environment, then install the project with its test tools:
@@ -60,7 +62,16 @@ Set `TAMPER_SCANNER_PASSWORD` to require HTTP Basic authentication on every rout
 
 ## Vercel demo deployment
 
-`api/index.py` serves the app on Vercel with data under `/tmp`, which is ephemeral and not shared between instances, so history, reviews, and evals are not durable there. When hosted with `TAMPER_SCANNER_ASSESSOR=openai`, the app refuses to start unless `TAMPER_SCANNER_PASSWORD` is set, so the OpenAI key cannot be used anonymously.
+The demo at https://tamper-scanner-five.vercel.app/ deploys automatically from `main`. The browser prompts for a username and password: any username works, and the password is the `TAMPER_SCANNER_PASSWORD` value configured in the Vercel project.
+
+How it is deployed:
+
+- `api/index.py` is the Vercel entrypoint and stores data under `/tmp/tamper-scanner`.
+- `vercel.json` sets the framework to Other with no build step and routes every path to the entrypoint.
+- `.vercelignore` keeps the virtual environment, local ledger, tests, and private documents out of CLI uploads.
+- Configure `TAMPER_SCANNER_PASSWORD` (and optionally `TAMPER_SCANNER_ASSESSOR` and `OPENAI_API_KEY`) under Settings → Environment Variables, then redeploy.
+
+Limitations: `/tmp` is ephemeral and not shared between instances, so history, reviews, and evals are not durable on the demo. Vercel rejects request bodies over about 4.5 MB. When hosted with `TAMPER_SCANNER_ASSESSOR=openai`, the app refuses to start unless `TAMPER_SCANNER_PASSWORD` is set, so the OpenAI key cannot be used anonymously.
 
 Create a baseline for a directory:
 
