@@ -550,7 +550,16 @@ loadSummary();
     return application
 
 
-app = create_app(os.getenv("TAMPER_SCANNER_ENCRYPTION_KEY"))
+def app_from_environment() -> FastAPI:
+    data_dir = Path(os.getenv("TAMPER_SCANNER_DATA_DIR", "."))
+    return create_app(
+        os.getenv("TAMPER_SCANNER_ENCRYPTION_KEY"),
+        artifact_root=data_dir / ".tamper-scanner-artifacts",
+        ledger_path=data_dir / ".tamper-scanner-ledger.db",
+    )
+
+
+app = app_from_environment()
 
 
 def run() -> None:

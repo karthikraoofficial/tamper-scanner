@@ -3,7 +3,7 @@ from io import BytesIO
 from fastapi.testclient import TestClient
 from pypdf import PdfWriter
 
-from tamper_scanner.web import app, create_app
+from tamper_scanner.web import app, app_from_environment, create_app
 
 
 client = TestClient(app)
@@ -103,6 +103,19 @@ def test_reviewer_feedback_is_available_to_eval_workflow(tmp_path) -> None:
 
     assert evaluation.status_code == 200
     assert evaluation.json()["total_cases"] == 1
+
+
+def test_data_directory_is_configurable_from_environment(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("TAMPER_SCANNER_DATA_DIR", str(tmp_path / "data"))
+    configured_client = TestClient(app_from_environment())
+
+    created = configured_client.post(
+        "/assessments",
+        files={"document": ("statement.pdf", pdf_bytes(), "application/pdf")},
+    )
+
+    assert created.status_code == 201
+    assert (tmp_path / "data" / ".tamper-scanner-ledger.db").exists()
 
 
 def test_persisted_run_can_be_reviewed_after_app_restart(tmp_path) -> None:
